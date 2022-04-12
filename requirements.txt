@@ -9,4 +9,5 @@ pandas
 numpy
 google-cloud-firestore
 jsonschema
+itsdangerous==2.0.1
 openpyxl
