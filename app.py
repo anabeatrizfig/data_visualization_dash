@@ -9,18 +9,31 @@ import plotly.graph_objects as go
 # Data Preprocessing
 
 # open dataset
-eu_data = pd.read_excel('data/eu_data.xlsx')
+eu_data = pd.read_excel('data/eu_data_v2.xlsx', sheet_name='geral')
+eu_time = pd.read_excel('data/eu_data_v2.xlsx', sheet_name='temporal')
 
 # create new features
 eu_data['NonRenewable energy consumption (TJ) 2015'] = eu_data['Total final energy consumption (TFEC) (TJ) 2015'] - eu_data['Renewable energy consumption (TJ) 2015']
 eu_data['NonRenewable energy consumption (%) 2015'] = eu_data['NonRenewable energy consumption (TJ) 2015']/eu_data['Total final energy consumption (TFEC) (TJ) 2015']
 eu_data['Renewable energy consumption (%) 2015'] = eu_data['Renewable energy consumption (TJ) 2015']/eu_data['Total final energy consumption (TFEC) (TJ) 2015']
 
+eu_time.columns = ['Countries', 'Country Code', 'lat', 'lon', 'Year',
+                   'Wind', 'Hydro',
+                   'Solar', 'Nuclear',
+                   'Biofuels', 'Geo Biomass Other',
+                   'Coal', 'Oil',
+                   'Gas', 'Renewable Consumption – Twh',
+                   'No Renewable Consumption – Twh'
+                ]
 
 country_options = [dict(label=country, value=country) for country in eu_data['Countries'].unique()]
+energy_options = ['Wind', 'Hydro',
+                   'Solar', 'Nuclear',
+                   'Biofuels', 'Geo Biomass Other',
+                   'Coal', 'Oil',
+                   'Gas']
 
 # token to use a free type of map from mapbox
-
 mapbox_token = 'pk.eyJ1IjoiYW5hYmVhdHJpemZpZyIsImEiOiJjbDF0NXZ4dW4yNjFrM2pxcnp1ZzQ1cGl1In0.vpjAAtkv4flG_jtgOHcDQw'
 # 1-MAP - fixed - no filter applied
 
@@ -71,28 +84,29 @@ fig_scattermap = go.Figure(data=data_scattermap, layout=layout_scattermap)
 # Building the Plots
 # 2-BARCHART
 
-data = eu_data[['Countries',
-        'Renewable energy consumption (%) 2015',
-        'NonRenewable energy consumption (%) 2015',
-        'Total final energy consumption (TFEC) (TJ) 2015'
-    ]].sort_values(by='Renewable energy consumption (%) 2015')
+data_bar = eu_data[['Countries',
+                    'Renewable energy consumption (%) 2015',
+                    'NonRenewable energy consumption (%) 2015',
+                    'Total final energy consumption (TFEC) (TJ) 2015'
+    ]].loc[(eu_data['Countries'] != 'Czech Republic') &
+           (eu_data['Countries'] != 'Malta')].sort_values(by='Renewable energy consumption (%) 2015')
 
 data_bar1 = dict(type='bar',
             orientation='h',
-            x=round(data['Renewable energy consumption (%) 2015'],2),
-            y=data['Countries'],
-            hovertemplate="<b>Country: </b> %{y} <br>" +
-                        "<b>Energy (TJ): </b> %{x} <br>",
+            x=round(data_bar['Renewable energy consumption (%) 2015'],2),
+            y=data_bar['Countries'],
+            hovertemplate="<b>Country: </b> % {y} <br>" +
+                        "<b>Energy (TJ): </b> % {x} <br>",
             name='Renewable',
             marker_color='green'
         )
 
 data_bar2 = dict(type='bar',
             orientation='h',
-            x=round(data['NonRenewable energy consumption (%) 2015'],2),
-            y=data['Countries'],
-            hovertemplate="<b>Country: </b> %{y} <br>" +
-                        "<b>Energy (TJ): </b> %{x} <br>",
+            x=round(data_bar['NonRenewable energy consumption (%) 2015'],2),
+            y=data_bar['Countries'],
+            hovertemplate="<b>Country: </b> % {y} <br>" +
+                        "<b>Energy (TJ): </b> % {x} <br>",
             name='NonRenewable',
             marker_color='gray'
         )
@@ -108,38 +122,39 @@ layout_bar = dict(title=dict(
 fig_bar = go.Figure(data=[data_bar1,data_bar2] , layout=layout_bar)
 
 # 3-SCATTERPLOT
-data = eu_data[['Countries',
-                'Country Code',
-                'Human capital index (HCI) (scale 0-1) 2020',
-                'Life expectancy at birth, total (years) 2014'
-               ]]
+data_scatter = eu_data[['Countries',
+                        'Country Code',
+                        'Renewable Consumption – Twh',
+                        'GDP per capita (current US$) 2020'
+                    ]]
 
-data_scatter = dict(type='scatter',
+data_scatter1 = dict(type='scatter',
                     mode='markers+text',
-                    x=round(data['Life expectancy at birth, total (years) 2014'],2),
-                    y=round(data['Human capital index (HCI) (scale 0-1) 2020'],2),
-                    hovertemplate="<b>Country: </b> %{customdata} <br>" +
-                                  "<b>HCI: </b> %{y} <br>" +
-                                  "<b>Life expectancy: </b> %{x} <br>",
-                    text=data['Country Code'],
-                    customdata=data['Countries'],
+                    x=round(data_scatter['Renewable Consumption – Twh'],2),
+                    y=round(data_scatter['GDP per capita (current US$) 2020'],2),
+                    customdata=data_scatter['Countries'],
                     textposition='top center',
                     marker=dict(size=eu_data['Population, total 2022']/1000000,
                                 color='green',
                                 opacity=0.7,
                                 sizemin=4
-                                )
+                                ),
+                    hovertemplate="<b>Country: </b>%{customdata}<br>" +
+                                  "<b>GDP per capita: </b>%{y}<br>" +
+                                  "<b>Renewable Consumption: </b>%{x}<br>"
+                    #               ,
+                    # text=data_scatter['Country Code'],
                )
 
 layout_scatter = dict(title=dict(
-                            text='HCI X Life Expectancy',
+                            text='Renewable Consumption X GDP per capita xxxxx',
                             x=.5
                             ),
-                      xaxis=dict(title='Life expectancy at birth in years (2014)'),
-                      yaxis=dict(title='Human capital index (HCI)')
+                      xaxis=dict(title='Renewable Consumption – Twh 2020'),
+                      yaxis=dict(title='GDP per capita (current US$) 2020')
                  )
 
-fig_scatter = go.Figure(data=data_scatter , layout=layout_scatter)
+fig_scatter = go.Figure(data=data_scatter1 , layout=layout_scatter)
 
 # The App itself
 colors = {
@@ -156,28 +171,37 @@ app.layout = html.Div([
         html.H1('Energy - Renewable')
     ], className='Title'),
     html.Div([
-        html.Div([
+        html.Div([html.Label('Year:'),
             dcc.Slider(
                 id='year_slider',
-                min=2000,
-                max=2020,
+                min=eu_time['Year'].min(),
+                max=eu_time['Year'].max(),
                 marks={str(i): '{}'.format(str(i)) for i in
-                        [2000, 2005, 2010, 2020]},
-                value=2000,
+                        [2000, 2005, 2010, 2015, 2020]},
+                value=2020,
                 step=1)],
             className='column_two'
             ),
-        html.Div([
+        html.Div([html.Label('Country:'),
             dcc.Dropdown(
                 id='country_drop',
                 options=country_options,
-                value=['Portugal'],
+                value='Portugal',
+                multi=False
+            )],
+            className='column_two'
+            )],
+        className='row'),
+    html.Div([html.H6(children='')], className='row'),
+    html.Div([html.Label('Type of Energy:'),
+            dcc.Dropdown(
+                id='type_energy',
+                options=energy_options,
+                value=energy_options,
                 multi=True
             )],
             className='column_two'
-            )
-        ],
-        className='row'),
+            ),
     html.Div([
         html.Div([
             html.H2(children='DASH title XXXXX'),
@@ -188,13 +212,8 @@ app.layout = html.Div([
             ],
             className='column_two'),
         html.Div([
-            html.H2(children='DASH title XXXXX'),
-            dcc.Graph(
-                id='scatter2',
-                figure=fig_scatter
-                # ,
-                # style={'display': 'inline-block', 'with': '30%'}
-                )
+            html.H2(children='timeseries'),
+            dcc.Graph(id='fig_line_up')
                 ],
                 className='column1'
             )
@@ -205,40 +224,150 @@ app.layout = html.Div([
             html.H2(children='DASH title XXXXX'),
             dcc.Graph(
                 id='scatter',
-                figure=fig_scatter,
-                style={'display': 'inline-block', 'with': '90%'}
+                figure=fig_scatter
+                # ,style={'display': 'inline-block', 'with': '90%'}
                 )
                 ],
                 className='column_two'),
-        html.Div([
-            html.H2(children='DASH title XXXXX'),
-            dcc.Graph(
-                id='bar2',
-                figure=fig_bar,
-                style={'display': 'inline-block', 'with': '90%'}
-                )
-        ],
-        className='column_two')
+            html.Div([
+                html.H2(children='timeseries'),
+                dcc.Graph(id='fig_line_down')
+            ],
+            className='column1'
+            )
     ],
     className='row')
      
 ])
 
-# @app.callback(
-#     [
-#         Output('fig_bar', 'figure'),
-#         Output('fig_scattermap', 'figure'),
-#         Output('fig_scatter', 'figure'),
-#     ],
-#     [
-#         Input('button', 'n_clicks')
-#     ],
-#     [
-#         # State('year_slider', 'value'),
-#         State('country_drop', 'value')
-#     ]
-# )
 
+@app.callback(
+    Output('fig_line_up', 'figure'),    
+    Input('country_drop', 'value'),
+    Input('year_slider', 'value'),
+)
+
+def plots(countries, year):
+    data = eu_time[['Countries',
+                    'Year',
+                    'Renewable Consumption – Twh',
+                    'No Renewable Consumption – Twh'
+                ]]
+
+    variables = ['Renewable Consumption – Twh',
+                'No Renewable Consumption – Twh']
+
+    country = countries
+
+    year = list(range(2000, year+1))
+
+    data_filter = data.loc[(data['Countries'] == country) & (data['Year'].isin(year))]
+
+    data_line = []
+
+    for variable in variables:
+             
+        x_line = data_filter['Year']
+        y_line =data_filter[variable]
+
+        data_line.append(dict(type='scatter',
+                            mode='lines',
+                            x=x_line,
+                            y=y_line,
+                            text=y_line.name,
+                            customdata=data_filter['Countries'],
+                            name = variable.split('Consumption')[0],
+                            hovertemplate="<b>Country: </b> %{customdata} <br>" +
+                                        "<b>Year: </b> %{x} <br>" +
+                                        "<b>Value: </b> %{y} <br>")
+                        )
+
+        layout_line = dict(title=dict(
+                                text='xxxxxxxxxxxx',
+                                x=.5),
+                                xaxis=dict(title='Year'),
+                                yaxis=dict(title='Energy Consumption'
+                                ),
+                            legend=dict(
+                                orientation="v"
+                                # ,
+                                # yanchor="bottom",
+                                # y=1.02,
+                                # xanchor="right",
+                                # x=1
+                                )    
+                            )
+
+    
+    
+    return go.Figure(data=data_line , layout=layout_line)
+
+
+@app.callback(
+    Output('fig_line_down', 'figure'),    
+    Input('country_drop', 'value'),
+    Input('year_slider', 'value'),
+    Input('type_energy', 'value')
+)
+
+def plots(countries, year, energy):
+
+    data = eu_time[['Countries',
+                    'Year',
+                    'Wind', 'Hydro',
+                    'Solar', 'Nuclear',
+                    'Biofuels', 'Geo Biomass Other',
+                    'Coal', 'Oil',
+                    'Gas'
+                ]]
+
+    variables = energy
+
+    country = countries
+
+    year = list(range(2000, year+1))
+
+    data_filter = data.loc[(data['Countries'] == country) & (data['Year'].isin(year))]
+
+    data_line = []
+
+    for variable in variables:
+             
+        x_line = data_filter['Year']
+        y_line =data_filter[variable]
+
+        data_line.append(dict(type='scatter',
+                            mode='lines',
+                            x=x_line,
+                            y=y_line,
+                            text=y_line.name,
+                            customdata=data_filter['Countries'],
+                            name = variable,
+                            hovertemplate="<b>Country: </b> %{customdata} <br>" +
+                                           "<b>Year: </b> %{x} <br>" +
+                                           "<b>Value: </b> %{y} <br>")
+                        )
+
+        layout_line = dict(title=dict(
+                                text='xxxxxxxxxxxx',
+                                x=.5),
+                                xaxis=dict(title='Year'),
+                                yaxis=dict(title='Energy Consumption'
+                                ),
+                            legend=dict(
+                                orientation="v"
+                                # ,
+                                # yanchor="bottom",
+                                # y=-1.4,
+                                # xanchor="right",
+                                # x=0.5
+
+                                )    
+                            )
+
+    
+    
+    return go.Figure(data=data_line , layout=layout_line)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
