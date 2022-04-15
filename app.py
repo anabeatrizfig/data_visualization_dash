@@ -1,3 +1,4 @@
+from turtle import color
 import pandas as pd
 pd.set_option('display.float_format', lambda x: '%.6f' % x)
 import dash
@@ -41,19 +42,17 @@ data_scattermap = dict(type='scattermapbox',
                     lat=eu_data['lat'], 
                     lon=eu_data['lon'],
                     mode=['markers', 'lines', 'text'][0],
-                    #hover_name=eu_data['Countries'], hover_data=eu_data['Population, total 2022'],
-                    #hoverinfo='name',
                     text=eu_data['Countries'],
                     customdata=round(eu_data['Population, total 2022']/1000000,1),
-                    marker=dict(color='blue',
-                                opacity=0.7,
+                    marker=dict(color='steelblue',
+                                opacity=0.8,
                                 size=eu_data['Population, total 2022']/2000000
                                 
                                 ),
+                    hovertext=eu_data['GDP per capita (current US$) 2020'],
                     hovertemplate="<b>Country: </b> %{text} <br>" +
-                                    "<b>Population (2022): </b> %{customdata}M <br>",
-                                    #"<b>GDP per capita (2020): </b> %{customdata[1]}" ,
-                    hovertext='name'
+                                    "<b>Population (2022): </b> %{customdata}M <br>"
+                                    "<b>GDP per capita (2020): </b> US$ %{hovertext}"
                     )
 
 
@@ -70,11 +69,12 @@ layout_scattermap = dict(mapbox=dict(style='light',
                                     l=30,
                                     r=30,
                                     b=20,
-                                    t=40
+                                    t=5
                                     ),
-                        title=dict(text='World Map',
-                                    x=.5
-                                ),
+                        paper_bgcolor='#9EDBDA',
+                        # title=dict(text='World Map',
+                        #             x=.5
+                        #         ),
                         hovermode='closest'
                         
                         )
@@ -125,33 +125,37 @@ fig_bar = go.Figure(data=[data_bar1,data_bar2] , layout=layout_bar)
 data_scatter = eu_data[['Countries',
                         'Country Code',
                         'Renewable Consumption – Twh',
-                        'GDP per capita (current US$) 2020'
-                    ]]
+                        'GDP per capita (current US$) 2020',
+                        'GDP (current US$) 2020'                    ]]
 
 data_scatter1 = dict(type='scatter',
                     mode='markers+text',
                     x=round(data_scatter['Renewable Consumption – Twh'],2),
-                    y=round(data_scatter['GDP per capita (current US$) 2020'],2),
+                    y=round(data_scatter['GDP (current US$) 2020'],2),
                     customdata=data_scatter['Countries'],
                     textposition='top center',
                     marker=dict(size=eu_data['Population, total 2022']/1000000,
-                                color='green',
-                                opacity=0.7,
+                                color='steelblue',
+                                opacity=0.8,
                                 sizemin=4
                                 ),
                     hovertemplate="<b>Country: </b>%{customdata}<br>" +
-                                  "<b>GDP per capita: </b>%{y}<br>" +
+                                  "<b>GDP (2020): </b>US$ %{y}<br>" +
                                   "<b>Renewable Consumption: </b>%{x}<br>"
-                    #               ,
+                                  
                     # text=data_scatter['Country Code'],
                )
 
-layout_scatter = dict(title=dict(
-                            text='Renewable Consumption X GDP per capita xxxxx',
-                            x=.5
-                            ),
+layout_scatter = dict(
+                      margin=dict(
+                                    l=40,
+                                    r=40,
+                                    b=20,
+                                    t=5
+                                    ),
+                      paper_bgcolor='#9EDBDA',
                       xaxis=dict(title='Renewable Consumption – Twh 2020'),
-                      yaxis=dict(title='GDP per capita (current US$) 2020')
+                      yaxis=dict(title='GDP (current US$) 2020')
                  )
 
 fig_scatter = go.Figure(data=data_scatter1 , layout=layout_scatter)
@@ -168,52 +172,59 @@ server = app.server
 
 app.layout = html.Div([
     html.Div([
-        html.H1('Energy - Renewable')
-    ], className='Title'),
+        html.H1('Consumption of Energy in European Union Countries')
+    ], className='title'),
     html.Div([
-        html.Div([html.Label('Year:'),
-            dcc.Slider(
-                id='year_slider',
-                min=eu_time['Year'].min(),
-                max=eu_time['Year'].max(),
-                marks={str(i): '{}'.format(str(i)) for i in
-                        [2000, 2005, 2010, 2015, 2020]},
-                value=2020,
-                step=1)],
-            className='column_two'
-            ),
-        html.Div([html.Label('Country:'),
-            dcc.Dropdown(
-                id='country_drop',
-                options=country_options,
-                value='Portugal',
-                multi=False
-            )],
-            className='column_two'
-            )],
-        className='row'),
-    html.Div([html.H6(children='')], className='row'),
-    html.Div([html.Label('Type of Energy:'),
-            dcc.Dropdown(
-                id='type_energy',
-                options=energy_options,
-                value=energy_options,
-                multi=True
-            )],
-            className='column_two'
-            ),
+        html.P('Students:  Ana Beatriz Oliveira (20211023) | Carlos Nunes (20210997) | Eliane Gotuzzo (20210996)  .',className='paragraph')
+    ], className='column_two'),
     html.Div([
         html.Div([
-            html.H2(children='DASH title XXXXX'),
+            html.Div([html.Label('Year:'),
+                dcc.Slider(
+                    id='year_slider',
+                    min=eu_time['Year'].min(),
+                    max=eu_time['Year'].max(),
+                    marks={str(i): '{}'.format(str(i)) for i in
+                            [2000, 2005, 2010, 2015, 2020]},
+                    value=2020,
+                    step=1)],
+                className='column_two_filter'
+                ),
+            html.Div([html.Label('Country:'),
+                dcc.Dropdown(
+                    id='country_drop',
+                    options=country_options,
+                    value='Portugal',
+                    multi=False
+                )],
+                className='column_two_filter'
+                )],
+            className='row'),
+        html.Div([html.H4(children='')], className='row'),
+        html.Div([html.Label('Type of Energy:'),
+                dcc.Dropdown(
+                    id='type_energy',
+                    options=energy_options,
+                    value=energy_options,
+                    multi=True
+                )],
+                className='column_two_filter'
+                )
+            ], className='filter'),
+    html.Div([
+        html.Div([
+            html.H2(children='EU Countries and Population (2022)'),
             dcc.Graph(
                 id='map',
                 figure=fig_scattermap
-                )
+                ),
+            html.H3(children='.  ')
             ],
             className='column_two'),
         html.Div([
-            html.H2(children='timeseries'),
-            dcc.Graph(id='fig_line_up')
+            html.H2(children='Energy Consumption'),
+            dcc.Graph(id='fig_line_up'),
+            html.H3(children='Note: No data for Malta and Czech Republic')
                 ],
                 className='column1'
             )
@@ -221,17 +232,19 @@ app.layout = html.Div([
         className='row'),
     html.Div([
         html.Div([
-            html.H2(children='DASH title XXXXX'),
+            html.H2(children='Renewable Consumption vs GDP per Country'),
             dcc.Graph(
                 id='scatter',
                 figure=fig_scatter
                 # ,style={'display': 'inline-block', 'with': '90%'}
-                )
+                ),
+                html.H3(children='Note: size represents the population (2022)')
                 ],
                 className='column_two'),
             html.Div([
-                html.H2(children='timeseries'),
-                dcc.Graph(id='fig_line_down')
+                html.H2(children='Energy Consumption per Type'),
+                dcc.Graph(id='fig_line_down'),
+                html.H3(children='Note: No data for Malta and Czech Republic')
             ],
             className='column1'
             )
@@ -282,20 +295,25 @@ def plots(countries, year):
                                         "<b>Value: </b> %{y} <br>")
                         )
 
-        layout_line = dict(title=dict(
-                                text='xxxxxxxxxxxx',
-                                x=.5),
+        layout_line = dict(
                                 xaxis=dict(title='Year'),
                                 yaxis=dict(title='Energy Consumption'
                                 ),
                             legend=dict(
-                                orientation="v"
+                                orientation="h"
                                 # ,
                                 # yanchor="bottom",
                                 # y=1.02,
                                 # xanchor="right",
                                 # x=1
-                                )    
+                                ),
+                            margin=dict(
+                                    l=40,
+                                    r=40,
+                                    b=20,
+                                    t=5
+                                    ),
+                            paper_bgcolor='#9EDBDA'  
                             )
 
     
@@ -348,21 +366,26 @@ def plots(countries, year, energy):
                                            "<b>Value: </b> %{y} <br>")
                         )
 
-        layout_line = dict(title=dict(
-                                text='xxxxxxxxxxxx',
-                                x=.5),
+        layout_line = dict(
                                 xaxis=dict(title='Year'),
                                 yaxis=dict(title='Energy Consumption'
                                 ),
                             legend=dict(
-                                orientation="v"
+                                orientation="h"
                                 # ,
                                 # yanchor="bottom",
                                 # y=-1.4,
                                 # xanchor="right",
                                 # x=0.5
 
-                                )    
+                                ),
+                            margin=dict(
+                                    l=40,
+                                    r=40,
+                                    b=20,
+                                    t=5
+                                    ),
+                            paper_bgcolor='#9EDBDA'   
                             )
 
     
