@@ -1,10 +1,9 @@
-from turtle import color
 import pandas as pd
 pd.set_option('display.float_format', lambda x: '%.6f' % x)
 import dash
 from dash import dcc
 from dash import html
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import plotly.graph_objects as go
 
 # Data Preprocessing
