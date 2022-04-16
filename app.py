@@ -105,7 +105,7 @@ data_scatter1 = dict(type='scatter',
                                 ),
                     hovertemplate="<b>Country: </b>%{customdata}<br>" +
                                   "<b>GDP (2020): </b>US$ %{y}<br>" +
-                                  "<b>Renewable Consumption: </b>%{x}<br>"                    
+                                  "<b>Renewable Consumption: </b>%{x} Twh<br>"                    
                )
 
 layout_scatter = dict(
@@ -251,12 +251,12 @@ def plots(countries, year):
                             name = variable.split('Consumption')[0],
                             hovertemplate="<b>Country: </b> %{customdata} <br>" +
                                         "<b>Year: </b> %{x} <br>" +
-                                        "<b>Value: </b> %{y} <br>")
+                                        "<b>Value: </b> %{y} Twh<br>")
                         )
 
         layout_line = dict(
                                 xaxis=dict(title='Year'),
-                                yaxis=dict(title='Energy Consumption'
+                                yaxis=dict(title='Energy Consumption (Twh)'
                                 ),
                             legend=dict(
                                 orientation="h"
@@ -316,12 +316,12 @@ def plots(countries, year, energy):
                             name = variable,
                             hovertemplate="<b>Country: </b> %{customdata} <br>" +
                                            "<b>Year: </b> %{x} <br>" +
-                                           "<b>Value: </b> %{y} <br>")
+                                           "<b>Value: </b> %{y} Twh<br>")
                         )
 
         layout_line = dict(
                                 xaxis=dict(title='Year'),
-                                yaxis=dict(title='Energy Consumption'
+                                yaxis=dict(title='Energy Consumption (Twh)'
                                 ),
                             legend=dict(
                                 orientation="h"
